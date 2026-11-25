@@ -1,4 +1,4 @@
-import {el,row,card,button,badge,external,fmtDate,languages} from './dom.js';
+import {el,row,card,button,badge,external,fmtDate,languageCounts} from './dom.js';
 import {exportHistory,importHistory} from '../core/store.js';
 import * as db from '../core/db.js';
 import {toast} from '../core/bus.js';
@@ -8,10 +8,10 @@ export function historyActions(after=()=>{}){
   return row(button('Xuất',exportHistory),button('Nhập',()=>file.click()),file);
 }
 export async function historyPage(root){
-  const list=el('div','stack'),counts=row();root.append(el('h1','','Lịch sử'),row(counts,historyActions(draw)),list);
+  const list=el('div','stack'),counts=el('span');root.append(el('h1','','Lịch sử'),row(counts,historyActions(draw)),list);
   async function draw(){
     const items=(await db.all('history')).sort((a,b)=>b.finished_at.localeCompare(a.finished_at));
-    counts.replaceChildren(...Object.keys(languages).map(l=>row(badge(l),String(items.filter(e=>e.lang===l).length))));
+    counts.textContent='Đã đọc: '+items.length+' bài · '+languageCounts(items);
     list.replaceChildren(...items.map(e=>card(row(badge(e.lang),el('time','muted',fmtDate(e.finished_at))),el('h2','',external(e.url,e.title)),el('p','muted',e.title_tr))));
     if(!items.length)list.append(card('Chưa có bài đã đọc.'));
   }

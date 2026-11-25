@@ -10,7 +10,10 @@ export function button(label,action,cls=''){
 export function external(url,label){const a=el('a','external',label);a.href=httpURL(url).href;a.target='_blank';a.rel='noopener noreferrer';return a;}
 export const languages={zh:'中文',ja:'日本語',ko:'한국어',en:'English'};
 export const topics={politics:'Chính trị',history:'Lịch sử',literature:'Văn học',world:'Thế giới',society:'Xã hội',culture:'Văn hóa'};
-export const badge=l=>el('span','badge '+l,({zh:'中',ja:'日',ko:'한',en:'EN'})[l]||l);
+const marks={zh:'中',ja:'日',ko:'한',en:'EN'};
+export const badge=l=>el('span','badge '+l,marks[l]||l);
+export const languageCounts=items=>Object.entries(marks).map(([lang,label])=>
+  label+' '+items.filter(item=>item.lang===lang).length).join(' · ');
 export const row=(...items)=>el('div','row',...items);
 export const card=(...items)=>el('section','card',...items);
 export const fmtDate=value=>value?new Date(value).toLocaleDateString('vi-VN'):'';

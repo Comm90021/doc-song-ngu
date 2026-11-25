@@ -7,10 +7,12 @@ export async function refresh(s,ctx){
     const date=ctx.now.slice(0,10).replace(/-/g,'/');
     let data;
     for(const base of ['https://api.wikimedia.org/feed/v1/wikipedia/'+s.wiki+'/featured/','https://'+host+'/api/rest_v1/feed/featured/']){
-      try{data=await ctx.net.fetchJSON(base+date,{direct:true});if(data.tfa)break;}catch(e){if(base.includes(host))throw e;}
+      try{data=await ctx.net.fetchJSON(base+date,{direct:true,signal:ctx.signal});if(data.tfa)break;}catch(e){if(ctx.signal?.aborted||base.includes(host))throw e;}
     }
     const t=data?.tfa;return t?[candidate(s,ctx,pageURL(host,t.title),t.normalizedtitle||t.title,{published_at:ctx.now.slice(0,10)})]:[];
   }
-  const data=await ctx.net.fetchJSON(wikiAPI(host,{action:'query',list:'search',srsearch:s.query,srsort:'random',srlimit:s.per_refresh||10,srnamespace:0,srprop:'size'}),{direct:true});
-  return data.query.search.map(t=>candidate(s,ctx,pageURL(host,t.title),t.title));
+  const data=await ctx.net.fetchJSON(wikiAPI(host,{action:'query',list:'search',srsearch:s.query,srsort:'random',srlimit:50,srnamespace:0,srprop:'size'}),{direct:true,signal:ctx.signal});
+  const bounded=['short','medium'].includes(ctx.settings?.length);
+  return data.query.search.filter(t=>t.size>=6000&&(!bounded||t.size<=60000))
+    .map(t=>candidate(s,ctx,pageURL(host,t.title),t.title));
 }

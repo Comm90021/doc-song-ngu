@@ -15,12 +15,13 @@ import {refresh} from '../web/sources/rss.js';
 import {translateBatch,resetTranslators} from '../web/core/translate.js';
 import {resumeTranslation} from '../web/core/article.js';
 const fixture=f=>readFile(new URL('fixtures/'+f,import.meta.url),'utf8');
-const ctx={sources:JSON.parse(await fixture('sources.json')),prefetch:false};
+const ctx={sources:JSON.parse(await fixture('sources.json'))};
 const DOMParser=new JSDOM('').window.DOMParser;
 const candidate=(name,lang,seq)=>({url:'https://example.org/'+name,canon:'https://example.org/'+name,lang,seq,series:seq?'series':null,source_id:seq?'series':'news',topics:['history'],kind:seq?'wikisource_series':'rss',status:'new'});
 test('Suggestion exclusions, series order, stability and rotation',async()=>{
   const rows=[candidate('a','ja',1),candidate('b','ja',2),candidate('c','en'),candidate('read','en'),candidate('skip','en')];
   await db.batch('candidates',rows);await db.put('history',{canon:rows[3].canon,lang:'en',finished_at:new Date().toISOString()});await db.put('skipped',{key:rows[4].canon});
+  await db.batch('articles',rows.slice(0,3).map((c,i)=>({id:'cached-'+i,canon:c.canon,status:'ready',stats:{chars:2000}})));
   assert.equal((await getSuggestion('all',ctx)).canon,rows[0].canon);
   assert.equal((await getSuggestion('all',ctx)).canon,rows[0].canon);
   assert.equal((await skipSuggestion(ctx)).canon,rows[2].canon);

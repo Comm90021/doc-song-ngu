@@ -18,13 +18,15 @@ export function paceHost(hostname){
   chain.set(hostname,next.catch(()=>{}));
   return next;
 }
-export async function fetchBytes(value,{method='GET',headers={},body,timeoutMs=20000,direct=false,retries=3}={}){
+export async function fetchBytes(value,{method='GET',headers={},body,timeoutMs=20000,direct=false,retries=3,signal}={}){
   const url=httpURL(value);
   headers={...headers};
   if (wikiHost.test(url.hostname)) headers['Api-User-Agent']='DocSongNgu/0.1 (personal reading app)';
   for(let attempt=0;;attempt++){
+    signal?.throwIfAborted();
     let result;
     await paceHost(url.hostname);
+    signal?.throwIfAborted();
     if(mode==='native' && !direct){
       const res=await plugin('CapacitorHttp').request({url:url.href,method,headers:{'User-Agent':userAgent,...headers},data:body,responseType:'arraybuffer',connectTimeout:timeoutMs,readTimeout:timeoutMs});
       const h=new Headers(res.headers);
@@ -37,11 +39,14 @@ export async function fetchBytes(value,{method='GET',headers={},body,timeoutMs=2
     } else {
       const proxy=mode==='pc'&&!direct;
       const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),timeoutMs);
+      const abort=()=>controller.abort(signal.reason);
+      signal?.addEventListener('abort',abort,{once:true});
       try{
         const res=await fetch(proxy?'/proxy?url='+encodeURIComponent(url.href):url.href,{method,body,headers:proxy?{'X-DSN':'1','X-Proxy-Headers':JSON.stringify(headers)}:headers,signal:controller.signal});
         result={status:Number(res.headers.get('X-Proxy-Status')||res.status),headers:res.headers,bytes:new Uint8Array(await res.arrayBuffer()),finalUrl:res.headers.get('X-Proxy-Final-Url')||res.url,contentType:res.headers.get('Content-Type')||''};
-      }finally{clearTimeout(timer);}
+      }finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
     }
+    signal?.throwIfAborted();
     if(attempt>=retries || !(result.status===429 || result.status>=500)) return result;
     await sleep(1000*2**attempt);
   }

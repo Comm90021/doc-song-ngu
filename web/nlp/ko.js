@@ -31,6 +31,13 @@ export function romanize(text) {
   });
 }
 const particles = '에서는 에게서 으로서 으로써 에서도 까지는 부터는 이라고 에서 에게 한테 께서 으로 처럼 보다 까지 부터 라고 와 과 은 는 이 가 을 를 에 의 로 도 만'.split(' ');
+const particleOf=word=>particles.find(p=>word.length>p.length&&word.endsWith(p));
+export function* eojeolStems(text){
+  for(const word of text.match(/[\p{L}\p{M}\p{N}]+/gu)||[]){
+    const p=particleOf(word);
+    if(p)yield word.slice(0,-p.length);
+  }
+}
 export function analyzeKo(text,{ko_roman=true,hasWord=()=>false}={}) {
   const tokens=[], words=[];
   function add(s,pos) {
@@ -40,7 +47,7 @@ export function analyzeKo(text,{ko_roman=true,hasWord=()=>false}={}) {
   }
   for (const [s] of text.matchAll(/[\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+/gu)) {
     if (!/[\p{L}\p{N}]/u.test(s)) {tokens.push({s});continue;}
-    const p=particles.find(p=>s.length>p.length && s.endsWith(p));
+    const p=particleOf(s);
     const stem=p && s.slice(0,-p.length);
     if (stem && (stem.length>=2 || hasWord(stem))) {add(stem,'n');add(p,'p');}
     else add(s,'x');

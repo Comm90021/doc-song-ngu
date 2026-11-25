@@ -8,6 +8,7 @@ async function slot(fn){
   try{return await fn();}finally{if(waiters.length)waiters.shift()();else active--;}
 }
 function code(lang,s){return lang==='zh'?(s.zh_script==='hant'?'zh-TW':'zh-CN'):lang;}
+export const needsTranslation=(source,target,s)=>source!==target&&code(source,s)!==code(target,s);
 // Cổng nào trả 429 thì tạm bỏ cổng đó 10 phút và chuyển ngay sang cổng kia (không gọi lại dồn dập).
 const blockedUntil={};
 export function resetTranslators(){for(const k of Object.keys(blockedUntil))delete blockedUntil[k];}
@@ -47,13 +48,17 @@ async function batch(texts,src,tgt,s,ctx){
     try{
       const response=await slot(()=>(ctx.net||net).fetchJSON(s.oa_base_url.replace(/\/+$/,'')+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+s.oa_key,'Content-Type':'application/json'},body:JSON.stringify({model:s.oa_model,temperature:0.2,messages:[{role:'system',content:'Translate each input sentence from '+src+' to '+tgt+'. Reply with ONLY a JSON array of strings, same length and order as the input.'},{role:'user',content:JSON.stringify(texts)}]})}));
       const arr=JSON.parse(response.choices[0].message.content);
-      if(Array.isArray(arr)&&arr.length===texts.length&&arr.every(x=>typeof x==='string'))return arr;
+      if(Array.isArray(arr)&&arr.length===texts.length&&arr.every(x=>typeof x==='string'&&x.trim()))return arr;
     }catch{}
   }
-  try{return await multi(texts,src,tgt,ctx);}catch{}
-  const lines=joined(await google(texts.join('\n'),src,tgt,false,ctx)).split(/\r?\n/);
-  if(lines.length===texts.length)return lines;
-  return Promise.all(texts.map(async t=>joined(await google(t,src,tgt,false,ctx))));
+  // Câu không có chữ (số, ký hiệu…) mà bộ dịch trả rỗng thì giữ nguyên câu gốc, không coi là lỗi.
+  const filled=out=>out.map((x,i)=>x.trim()||/\p{L}/u.test(texts[i])?x:texts[i]);
+  try{const out=filled(await multi(texts,src,tgt,ctx));if(out.every(x=>x.trim()))return out;}catch{}
+  const lines=filled(joined(await google(texts.join('\n'),src,tgt,false,ctx)).split(/\r?\n/));
+  if(lines.length===texts.length&&lines.every(x=>x.trim()))return lines;
+  const out=filled(await Promise.all(texts.map(async t=>joined(await google(t,src,tgt,false,ctx)))));
+  if(out.some(x=>!x.trim()))throw Error('Bộ dịch không trả về bản dịch');
+  return out;
 }
 export function batches(items,text=x=>x){
   const groups=[];let group=[],length=0;
@@ -67,7 +72,7 @@ export function batches(items,text=x=>x){
 }
 export async function translateBatch(texts,source,target,ctx={}){
   const s=ctx.settings||await settings(),src=code(source,s),tgt=code(target,s);
-  if(src===tgt||source===target)return texts.map(()=>'');
+  if(!needsTranslation(source,target,s))return texts.map(()=>'');
   const result=[];
   for(const group of batches(texts)){
     if(group.length===1 && group[0].length>4500){

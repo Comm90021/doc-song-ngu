@@ -1,13 +1,16 @@
 import {analyzeEn} from './en.js';
-import {analyzeKo} from './ko.js';
+import {analyzeKo,eojeolStems} from './ko.js';
 import {emit,toast} from '../core/bus.js';
 import * as db from '../core/db.js';
 const workers=new Map();let seq=0;
 export async function analyze(lang,sentences,opts={}){
   if(lang==='en')return sentences.map(analyzeEn);
   if(lang==='ko'){
-    const stems=new Set(sentences.join(' ').match(/[가-힣]/g)||[]),known=new Set();
-    if((await db.all('dict_meta')).some(p=>p.lang==='ko'))await Promise.all([...stems].map(async s=>{if((await db.index('dict','lang+head',['ko',s],1)).length)known.add(s)}));
+    const known=new Set();
+    if((await db.all('dict_meta')).some(p=>p.lang==='ko')){
+      const stems=new Set(sentences.flatMap(s=>[...eojeolStems(s)]));
+      await Promise.all([...stems].map(async s=>{if((await db.index('dict','lang+head',['ko',s],1)).length)known.add(s)}));
+    }
     return sentences.map(s=>analyzeKo(s,{...opts,ko_roman:true,hasWord:s=>known.has(s)}));
   }
   let entry=workers.get(lang);

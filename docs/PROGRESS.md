@@ -14,3 +14,6 @@
 
 ## Bước 3a
 Đã chạy npm test: 17/17 (13 cũ + 4 mới trong tests/fixes.test.js). Đã sửa 3 lỗi: (1) series Wikisource lấy thứ tự chương từ HTML trang mục lục (web/sources/wikisource.js); (2) bài gợi ý dưới 800 ký tự (ja/zh/ko) hoặc 1 500 (en) bị đánh dấu bad và chọn bài khác (web/core/jobs.js, recommend.js); (3) Wikimedia được xếp hàng theo host, cách nhau ≥ 1 000 ms (web/core/net.js). Smoke: ja, zh, ko, en đều mở và dịch đạt ngưỡng, tra từ 20/20. Kiểm tra server PC cổng 8798 đạt. Chi tiết và việc còn lại: docs/test_report.md.
+
+## Fix round 1
+Giới hạn lượt cập nhật và kho theo ngôn ngữ, thêm tiến độ nguồn và tách kiểm tra độ dài khỏi phân tích câu. Wikipedia lọc theo kích thước nguồn, Wikisource bổ sung chương theo hạn mức, thẻ Hôm nay giữ bài hợp lệ và luân phiên loại bài. Đã thêm bộ lọc loại bài, sửa số đếm Hôm nay và Lịch sử, hiện trạng thái dịch và nút thử lại, và sửa tra thân từ tiếng Hàn. Kiểm thử ngoại tuyến qua 32/32 (15 ca mới).

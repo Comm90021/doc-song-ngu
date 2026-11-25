@@ -8,7 +8,6 @@ import * as net from '../web/core/net.js';
 import {articleId} from '../web/core/util.js';
 import {getSuggestion} from '../web/core/recommend.js';
 import {defaults} from '../web/core/settings.js';
-import {prefetchSuggestion} from '../web/core/jobs.js';
 import {refresh as seriesRefresh,seriesTitles} from '../web/sources/wikisource.js';
 
 const DOMParser=new JSDOM('').window.DOMParser;
@@ -32,7 +31,7 @@ test('Wikisource series keeps index page order, decodes links and dedupes',async
 test('Wikisource refresh builds series candidates with seq from the index page',async()=>{
   const html='<a href="/wiki/The_Federalist_(Dawson)/No._1">1</a><a href="/wiki/The_Federalist_(Dawson)/No._2">2</a>';
   const calls=[];
-  const ctx={db:{index:async()=>[]},now:new Date().toISOString(),DOMParser,net:{fetchJSON:async url=>{calls.push(url);return {parse:{text:html}};}}};
+  const ctx={db,now:new Date().toISOString(),DOMParser,net:{fetchJSON:async url=>{calls.push(url);return {parse:{text:html}};}}};
   const rows=await seriesRefresh({id:'ws-en-federalist',wiki:'en',index:'The Federalist (Dawson)',kind:'wikisource_series',lang:'en',topics:['politics']},ctx);
   const requested=new URL(calls[0]);
   assert.equal(requested.hostname,'en.wikisource.org');
@@ -42,6 +41,8 @@ test('Wikisource refresh builds series candidates with seq from the index page',
     ['The Federalist (Dawson)/No. 1',1,'ws-en-federalist','https://en.wikisource.org/wiki/The_Federalist_(Dawson)/No._1'],
     ['The Federalist (Dawson)/No. 2',2,'ws-en-federalist','https://en.wikisource.org/wiki/The_Federalist_(Dawson)/No._2'],
   ]);
+  assert.deepEqual(await seriesRefresh({id:'ws-en-federalist',wiki:'en',index:'The Federalist (Dawson)',kind:'wikisource_series',lang:'en',topics:['politics']},ctx),rows);
+  assert.equal(calls.length,1);
 });
 
 test('Wikimedia requests to one host start at least 1 000 ms apart',async()=>{
@@ -62,20 +63,19 @@ test('Wikimedia requests to one host start at least 1 000 ms apart',async()=>{
 });
 
 test('Suggested article shorter than the minimum is marked bad and replaced',async()=>{
-  const ctx={prefetch:false,sources:[{id:'news',enabled:true}],DOMParser,Readability,settings:defaults,analyze:async(lang,texts)=>texts.map(()=>({tokens:[]})),net:{
+  const ctx={sources:[{id:'news',enabled:true}],DOMParser,Readability,settings:defaults,analyze:async(lang,texts)=>texts.map(()=>({tokens:[]})),net:{
     fetchText:async url=>({text:url.includes('/short')
       ?'<html lang="en"><head><title>Short</title></head><body><p>'+'Too short to read as a suggestion. '.repeat(10)+'</p></body></html>'
       :'<html lang="en"><head><title>Long</title></head><body><article>'+Array.from({length:6},(_,i)=>'<p>'+`Paragraph ${i} about the long article body. `.repeat(20)+'</p>').join('')+'</article></body></html>',finalUrl:url}),
     fetchJSON:async()=>{throw Error('offline')}}};
   const row=(name)=>({canon:'https://example.org/'+name,url:'https://example.org/'+name,title:name,lang:'en',source_id:'news',kind:'rss',topics:['history'],series:null,seq:null,published_at:null,est_chars:null,status:'new',fetched_at:new Date().toISOString()});
   const short=row('short'), long=row('long');
-  await db.batch('candidates',[short]);
-  assert.equal((await getSuggestion('all',ctx)).canon,short.canon);
-  await db.put('candidates',long);
-  await prefetchSuggestion(short,'all',ctx);
+  short.published_at='2026-01-02';
+  await db.batch('candidates',[short,long]);
+  assert.equal((await getSuggestion('all',ctx)).canon,long.canon);
   const marked=await db.get('candidates',short.canon);
   assert.equal(marked.status,'bad');
-  assert.ok(marked.est_chars>0&&marked.est_chars<1500,'length check must run on the opened article');
+  assert.ok(marked.est_chars>0&&marked.est_chars<1500);
   assert.equal(await db.get('articles',await articleId(short.canon)),undefined);
   assert.equal(await db.state('current_suggestion'),long.canon);
 });

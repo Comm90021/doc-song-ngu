@@ -15,8 +15,14 @@ export function seriesTitles(html,index,DOMParser=globalThis.DOMParser){
   return out;
 }
 export async function refresh(s,ctx){
-  if((await ctx.db.index('candidates','source_id',s.id)).length)return [];
   const host=s.wiki+'.wikisource.org';
-  const data=await ctx.net.fetchJSON(wikiAPI(host,{action:'parse',page:s.index,prop:'text'}),{direct:true});
-  return seriesTitles(data.parse.text,s.index,ctx.DOMParser).map((title,i)=>candidate(s,ctx,pageURL(host,title),title,{series:s.id,seq:i+1}));
+  const key='wikisource_index:'+s.id+':'+s.index;
+  let titles=await ctx.db.state(key);
+  if(!titles){
+    const data=await ctx.net.fetchJSON(wikiAPI(host,{action:'parse',page:s.index,prop:'text'}),{direct:true,signal:ctx.signal});
+    titles=seriesTitles(data.parse.text,s.index,ctx.DOMParser);
+    ctx.signal?.throwIfAborted();
+    if(titles.length)await ctx.db.setState(key,titles);
+  }
+  return titles.map((title,i)=>candidate(s,ctx,pageURL(host,title),title,{series:s.id,seq:i+1}));
 }

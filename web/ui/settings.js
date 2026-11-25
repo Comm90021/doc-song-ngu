@@ -43,7 +43,11 @@ export async function settingsPage(root,signal){
     group('Bộ dịch',select('Dịch vụ','translator',{google_free:'Google miễn phí',openai_compat:'API kiểu OpenAI'}),input('Base URL','oa_base_url','url'),input('Khóa API','oa_key','password'),input('Model','oa_model','text')),
     group('Nguồn bài',sourceRows,button('Cập nhật ngay',async()=>{await maybeRefresh(true);await drawSources();})),
     group('Dữ liệu',historyActions(),el('p','muted','Sổ lịch sử · '+ledgerLocation()),el('p','muted',(await db.state('documents_copy'))||''),button('Xóa dữ liệu tạm',async()=>{if(!confirm('Xóa bài lưu tạm và kho đề xuất?'))return;
-      await db.transaction(['articles','candidates','state'],'readwrite',tx=>{tx.objectStore('articles').clear();tx.objectStore('candidates').clear();tx.objectStore('state').delete('current_suggestion');});toast('Đã xóa dữ liệu tạm');
+      await db.transaction(['articles','candidates','state'],'readwrite',tx=>{
+        tx.objectStore('articles').clear();tx.objectStore('candidates').clear();
+        const state=tx.objectStore('state');
+        state.delete('current_suggestion');state.delete('suggestion_pins');
+      });toast('Đã xóa dữ liệu tạm');
     })));
   async function drawSources(){
     const list=await sources().catch(()=>[]),status=await db.all('source_status');
