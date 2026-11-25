@@ -113,7 +113,9 @@ async function swipeUp(x, y, dy = -200) {
 const btnExpr = text => `[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)})`;
 const VISIBLE_WORD = `[...document.querySelectorAll('.paper .w')].find(e=>{const r=e.getBoundingClientRect();return r.top>140&&r.bottom<innerHeight-60;})`;
 const POPUP_CLOSE = `[...document.querySelectorAll('.popup button')].find(b=>b.textContent.trim()==='✕')`;
-const READY = `(()=>{const p=document.querySelector('.paper');if(!p)return false;const sents=[...p.querySelectorAll('.block .sentence')];const tr=sents.filter(s=>(s.querySelector('.translation')?.textContent||'').trim()).length;return sents.length>0&&tr>=5;})()`;
+// E2E_MIN_TR=0 lets the reader count as ready before any translation arrives (degraded mode when Google is rate-limiting).
+const MIN_TR = Number(process.env.E2E_MIN_TR ?? 5);
+const READY = `(()=>{const p=document.querySelector('.paper');if(!p)return false;const sents=[...p.querySelectorAll('.block .sentence')];const tr=sents.filter(s=>(s.querySelector('.translation')?.textContent||'').trim()).length;return sents.length>0&&tr>=${MIN_TR};})()`;
 const STATS = `(()=>{const p=document.querySelector('.paper');const sents=[...p.querySelectorAll('.block .sentence')];const han=sents.filter(s=>/\\p{Script=Han}/u.test(s.querySelector('.original')?.textContent||''));return {lang_attr:p.lang,ruby:p.querySelectorAll('ruby').length,sentences:sents.length,translated:sents.filter(s=>(s.querySelector('.translation')?.textContent||'').trim()).length,han:han.length,han_ruby:han.filter(s=>s.querySelector('ruby')).length,hash:location.hash,title:document.querySelector('.short-title')?.textContent||''};})()`;
 const IDB_ALL = store => `new Promise((res,rej)=>{const r=indexedDB.open('docsongngu',1);r.onsuccess=()=>{const q=r.result.transaction(${JSON.stringify(store)}).objectStore(${JSON.stringify(store)}).getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>rej(String(q.error));};r.onerror=()=>rej(String(r.error));})`;
 
@@ -182,7 +184,7 @@ for (const lang of ['ja', 'zh', 'ko', 'en']) {
       const txt = await ev(`document.querySelector('#app').innerText.slice(0,300)`).catch(() => '');
       throw new Error('reader not ready in 120 s; page says: ' + txt.replace(/\s+/g, ' '));
     }
-    await waitFor(`(()=>{const s=[...document.querySelectorAll('.paper .block .sentence')];return s.length>0&&s.every(x=>(x.querySelector('.translation')?.textContent||'').trim());})()`, 60000, 500);
+    if (!process.env.E2E_NO_TR) await waitFor(`(()=>{const s=[...document.querySelectorAll('.paper .block .sentence')];return s.length>0&&s.every(x=>(x.querySelector('.translation')?.textContent||'').trim());})()`, 60000, 500);
     R.timings['reader_' + lang + '_all_translated_ms'] = Date.now() - t0;
     const st = await ev(STATS);
     const id = st.hash.replace('#/doc/', '');

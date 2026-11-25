@@ -9,8 +9,8 @@ import {bus,toast} from '../core/bus.js';
 let filter='all';
 export async function home(root,signal){
   const chips=row(), resume=el('div'), suggestion=card(),status=el('span','muted'), loading=el('p','muted'),input=el('input');
-  let version=0,list=[];
-  const open=async(url,c)=>{loading.textContent='Đang lấy bài…';try{const id=await openArticle(url,c);if(!signal.aborted)location.hash='/doc/'+id;}finally{loading.textContent='';}};
+  let version=0,list=[],opening=false;
+  const open=async(url,c)=>{opening=true;loading.textContent='Đang lấy bài…';try{const id=await openArticle(url,c);if(!signal.aborted)location.hash='/doc/'+id;}finally{opening=false;loading.textContent='';}};
   input.type='url';input.placeholder='https://…';input.setAttribute('aria-label','Đường dẫn bài viết');
   const paste=row(input,button('Mở',()=>open(input.value.trim()),'primary'));
   input.onkeydown=e=>{if(e.key==='Enter')paste.querySelector('button').click();};
@@ -41,6 +41,7 @@ export async function home(root,signal){
   bus.addEventListener('refresh-status',e=>{if(e.detail.running)status.textContent='Đang cập nhật…';else schedule();},{signal});
   bus.addEventListener('suggestion-changed',schedule,{signal});
   bus.addEventListener('article-updated',schedule,{signal});
-  bus.addEventListener('load-status',e=>loading.textContent=e.detail,{signal});
+  // Chỉ hiện trạng thái khi chính người dùng bấm mở bài; bỏ qua lúc app tự xử lý trước bài đề xuất ở nền.
+  bus.addEventListener('load-status',e=>{if(opening)loading.textContent=e.detail;},{signal});
   await draw();
 }

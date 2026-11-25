@@ -53,6 +53,9 @@ async function build(url,key,id,meta,ctx){
     emit('load-status','Đang lấy bài…');
     const data=await extractArticle(url,{...ctx,lang:meta.lang});
     a.lang=data.lang;a.fetched_title=data.title;
+    // Readability thường giữ lại tiêu đề làm khối đầu tiên của nội dung → bỏ để tiêu đề không hiện hai lần.
+    const same=x=>String(x||'').replace(/\s+/g,'');
+    if(data.blocks.length&&same(data.blocks[0].text)===same(data.title))data.blocks=data.blocks.slice(1);
     let convert=x=>x;
     if(a.lang==='zh' && s.zh_script!=='orig'){
       const cc=ctx.opencc||await import('../vendor/opencc/full.js');
