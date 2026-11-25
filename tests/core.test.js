@@ -12,7 +12,7 @@ import {configureStore,readLedger,rebuild} from '../web/core/store.js';
 import {extractArticle} from '../web/core/extract.js';
 import {decode} from '../web/core/net.js';
 import {refresh} from '../web/sources/rss.js';
-import {translateBatch} from '../web/core/translate.js';
+import {translateBatch,resetTranslators} from '../web/core/translate.js';
 import {resumeTranslation} from '../web/core/article.js';
 const fixture=f=>readFile(new URL('fixtures/'+f,import.meta.url),'utf8');
 const ctx={sources:JSON.parse(await fixture('sources.json')),prefetch:false};
@@ -57,5 +57,7 @@ test('Translation fallback and rate-limit pause',async()=>{
   const times=[];
   await db.put('articles',{id:'rate',status:'ready',lang:'en',target_lang:'vi',title:{text:'Hello',i:-1,tr:null},blocks:[],progress:{translated:0,total:0}});
   await resumeTranslation('rate',{settings,sleep:async ms=>times.push(ms),net:{fetchJSON:async()=>{throw Object.assign(Error(),{status:429})}}});
-  assert.deepEqual(times,[2000,4000,8000]);assert.equal((await db.get('articles','rate')).progress.tr_state,'paused');
+  // 429: không chờ gọi lại dồn dập — đánh dấu cổng bị giới hạn, chuyển cổng, hết cổng thì tạm dừng.
+  assert.deepEqual(times,[]);assert.equal((await db.get('articles','rate')).progress.tr_state,'paused');
+  resetTranslators();
 });

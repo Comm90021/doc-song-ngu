@@ -8,19 +8,38 @@ async function slot(fn){
   try{return await fn();}finally{if(waiters.length)waiters.shift()();else active--;}
 }
 function code(lang,s){return lang==='zh'?(s.zh_script==='hant'?'zh-TW':'zh-CN'):lang;}
-async function google(text,src,tgt,dict,ctx){
-  const params=new URLSearchParams({client:'gtx',sl:src,tl:tgt,dt:'t',dj:'1'});
-  if(dict)params.append('dt','bd');
-  const url='https://translate.googleapis.com/translate_a/single?'+params;
+// Cổng nào trả 429 thì tạm bỏ cổng đó 10 phút và chuyển ngay sang cổng kia (không gọi lại dồn dập).
+const blockedUntil={};
+export function resetTranslators(){for(const k of Object.keys(blockedUntil))delete blockedUntil[k];}
+async function request(provider,fn,ctx){
+  if(blockedUntil[provider]>Date.now())throw Object.assign(Error('Bộ dịch đang tạm bị giới hạn — thử lại sau ít phút'),{status:429});
   return slot(async()=>{
     for(let attempt=0;;attempt++){
-      try{return await (ctx.net||net).fetchJSON(url,{method:'POST',direct:false,retries:0,headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:new URLSearchParams({q:text}).toString()});}
+      try{return await fn();}
       catch(e){
-        if(![429,503].includes(e.status)||attempt===3)throw e;
+        if(e.status===429){blockedUntil[provider]=Date.now()+10*60*1000;throw e;}
+        if(e.status!==503||attempt===2)throw e;
         await (ctx.sleep||sleep)(2000*2**attempt);
       }
     }
   });
+}
+const form={'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'};
+// Cổng chính: clients5 (dict-chrome-ex), mỗi câu một tham số q → trả mảng đúng thứ tự từng câu.
+async function multi(texts,src,tgt,ctx){
+  const url='https://clients5.google.com/translate_a/t?'+new URLSearchParams({client:'dict-chrome-ex',sl:src,tl:tgt});
+  const body=texts.map(t=>'q='+encodeURIComponent(t)).join('&');
+  const json=await request('multi',()=>(ctx.net||net).fetchJSON(url,{method:'POST',direct:false,retries:0,headers:form,body}),ctx);
+  const out=(Array.isArray(json)?json:[json]).map(x=>Array.isArray(x)?String(x[0]??''):typeof x==='string'?x:null);
+  if(out.length!==texts.length||out.some(x=>x===null))throw Error('Số câu dịch không khớp');
+  return out;
+}
+// Cổng dự phòng: gtx, các câu nối bằng \n.
+async function google(text,src,tgt,dict,ctx){
+  const params=new URLSearchParams({client:'gtx',sl:src,tl:tgt,dt:'t',dj:'1'});
+  if(dict)params.append('dt','bd');
+  const url='https://translate.googleapis.com/translate_a/single?'+params;
+  return request('gtx',()=>(ctx.net||net).fetchJSON(url,{method:'POST',direct:false,retries:0,headers:form,body:new URLSearchParams({q:text}).toString()}),ctx);
 }
 const joined=json=>(json.sentences||[]).map(s=>s.trans||'').join('');
 async function batch(texts,src,tgt,s,ctx){
@@ -31,6 +50,7 @@ async function batch(texts,src,tgt,s,ctx){
       if(Array.isArray(arr)&&arr.length===texts.length&&arr.every(x=>typeof x==='string'))return arr;
     }catch{}
   }
+  try{return await multi(texts,src,tgt,ctx);}catch{}
   const lines=joined(await google(texts.join('\n'),src,tgt,false,ctx)).split(/\r?\n/);
   if(lines.length===texts.length)return lines;
   return Promise.all(texts.map(async t=>joined(await google(t,src,tgt,false,ctx))));
@@ -58,7 +78,8 @@ export async function translateBatch(texts,source,target,ctx={}){
   return result;
 }
 export async function quickLookup(text,src,tgt,ctx={}){
-  const s=ctx.settings||await settings();
-  const json=await google(text,code(src,s),code(tgt,s),true,ctx);
+  const s=ctx.settings||await settings(),a=code(src,s),b=code(tgt,s);
+  try{const [tr]=await multi([text],a,b,ctx);if(tr)return {tr,dict:[]};}catch{}
+  const json=await google(text,a,b,true,ctx);
   return {tr:joined(json),dict:(json.dict||[]).map(d=>({pos:d.pos,terms:d.terms||[]}))};
 }

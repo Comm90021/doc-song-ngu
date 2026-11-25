@@ -61,6 +61,7 @@ export async function reader(root,id,signal){
   signal.addEventListener('abort',()=>{observer.disconnect();void save();},{once:true});
   document.addEventListener('visibilitychange',save,{signal});window.addEventListener('pagehide',save,{signal});
   bus.addEventListener('article-updated',async e=>{if(e.detail.id===id){const latest=await db.get('articles',id);if(latest)updateTr(latest);}},{signal});
-  const latest=await db.get('articles',id);if(latest){updateTr(latest);if(latest.progress.tr_state==='running')void resumeTranslation(id);}
+  // Nếu đang có lượt dịch giới hạn (xử lý trước) thì chờ nó xong rồi dịch tiếp phần còn lại; bài từng bị tạm dừng cũng thử lại.
+  const latest=await db.get('articles',id);if(latest){updateTr(latest);if(latest.progress.tr_state!=='done')void resumeTranslation(id).then(()=>resumeTranslation(id));}
   return {body,records,lang:a.lang};
 }

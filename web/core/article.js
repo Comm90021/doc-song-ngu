@@ -13,7 +13,8 @@ export function resumeTranslation(id,ctx={}){
 }
 async function translate(id,ctx){
   const a=await db.get('articles',id);if(!a||a.status!=='ready')return;
-  const groups=[[a.title],...a.blocks.map(b=>b.sentences)];
+  // Tiêu đề dịch riêng trước (cho thẻ đề xuất); thân bài gom nhiều đoạn vào lô ≤ 4 500 ký tự để ít lượt gọi.
+  const groups=[[a.title],a.blocks.flatMap(b=>b.sentences)];
   const limit=ctx.translationLimit??Infinity;
   const save=async fn=>{await db.update('articles',id,fn);emit('article-updated',{id});};
   try{

@@ -41,7 +41,8 @@ export function prefetchSuggestion(c,filter='all',ctx={}){
 }
 async function prefetch(c,filter,ctx){
   let a;
-  try{const id=await openArticle(c.url,c,ctx);a=await db.get('articles',id);}
+  // Xử lý trước ở nền chỉ dịch tiêu đề + 20 câu đầu; phần còn lại dịch khi người dùng thật sự mở bài.
+  try{const id=await openArticle(c.url,c,{translationLimit:20,...ctx});a=await db.get('articles',id);}
   catch{await db.update('candidates',c.canon,row=>({...row,status:'bad'}));}
   if(a)await db.update('candidates',c.canon,row=>({...row,est_chars:a.stats.chars}));
   const short=!!a&&a.stats.chars<minChars(a.lang);
