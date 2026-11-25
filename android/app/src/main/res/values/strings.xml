@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Đọc Song Ngữ</string>
+    <string name="title_activity_main">Đọc Song Ngữ</string>
+    <string name="package_name">app.docsongngu</string>
+    <string name="custom_url_scheme">app.docsongngu</string>
+</resources>

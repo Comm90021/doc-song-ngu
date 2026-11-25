@@ -1,0 +1,64 @@
+import * as net from './net.js';
+import {settings} from './settings.js';
+import {sleep} from './util.js';
+let active=0;
+const waiters=[];
+async function slot(fn){
+  if(active>=2)await new Promise(resolve=>waiters.push(resolve));else active++;
+  try{return await fn();}finally{if(waiters.length)waiters.shift()();else active--;}
+}
+function code(lang,s){return lang==='zh'?(s.zh_script==='hant'?'zh-TW':'zh-CN'):lang;}
+async function google(text,src,tgt,dict,ctx){
+  const params=new URLSearchParams({client:'gtx',sl:src,tl:tgt,dt:'t',dj:'1'});
+  if(dict)params.append('dt','bd');
+  const url='https://translate.googleapis.com/translate_a/single?'+params;
+  return slot(async()=>{
+    for(let attempt=0;;attempt++){
+      try{return await (ctx.net||net).fetchJSON(url,{method:'POST',direct:false,retries:0,headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:new URLSearchParams({q:text}).toString()});}
+      catch(e){
+        if(![429,503].includes(e.status)||attempt===3)throw e;
+        await (ctx.sleep||sleep)(2000*2**attempt);
+      }
+    }
+  });
+}
+const joined=json=>(json.sentences||[]).map(s=>s.trans||'').join('');
+async function batch(texts,src,tgt,s,ctx){
+  if(s.translator==='openai_compat' && s.oa_base_url && s.oa_model){
+    try{
+      const response=await slot(()=>(ctx.net||net).fetchJSON(s.oa_base_url.replace(/\/+$/,'')+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+s.oa_key,'Content-Type':'application/json'},body:JSON.stringify({model:s.oa_model,temperature:0.2,messages:[{role:'system',content:'Translate each input sentence from '+src+' to '+tgt+'. Reply with ONLY a JSON array of strings, same length and order as the input.'},{role:'user',content:JSON.stringify(texts)}]})}));
+      const arr=JSON.parse(response.choices[0].message.content);
+      if(Array.isArray(arr)&&arr.length===texts.length&&arr.every(x=>typeof x==='string'))return arr;
+    }catch{}
+  }
+  const lines=joined(await google(texts.join('\n'),src,tgt,false,ctx)).split(/\r?\n/);
+  if(lines.length===texts.length)return lines;
+  return Promise.all(texts.map(async t=>joined(await google(t,src,tgt,false,ctx))));
+}
+export function batches(items,text=x=>x){
+  const groups=[];let group=[],length=0;
+  for(const item of items){
+    const size=text(item).length;
+    if(group.length && length+size+1>4500){groups.push(group);group=[];length=0;}
+    group.push(item);length+=size+1;
+  }
+  if(group.length)groups.push(group);
+  return groups;
+}
+export async function translateBatch(texts,source,target,ctx={}){
+  const s=ctx.settings||await settings(),src=code(source,s),tgt=code(target,s);
+  if(src===tgt||source===target)return texts.map(()=>'');
+  const result=[];
+  for(const group of batches(texts)){
+    if(group.length===1 && group[0].length>4500){
+      const chunks=group[0].match(/[\s\S]{1,2200}/gu)||[];
+      result.push((await translateBatch(chunks,source,target,{...ctx,settings:s})).join(' '));
+    }else result.push(...await batch(group,src,tgt,s,ctx));
+  }
+  return result;
+}
+export async function quickLookup(text,src,tgt,ctx={}){
+  const s=ctx.settings||await settings();
+  const json=await google(text,code(src,s),code(tgt,s),true,ctx);
+  return {tr:joined(json),dict:(json.dict||[]).map(d=>({pos:d.pos,terms:d.terms||[]}))};
+}

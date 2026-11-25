@@ -1,0 +1,92 @@
+name: android
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Vendor web assets
+        run: npm run vendor
+
+      - name: Sync Capacitor to Android
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Decode release keystore and export signing env
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KS="$RUNNER_TEMP/release.p12"
+          printf '%s' "$ANDROID_KEYSTORE_B64" | base64 -d > "$KS"
+          {
+            echo "ANDROID_KEYSTORE_PATH=$KS"
+            echo "ANDROID_KEYSTORE_PASSWORD=$ANDROID_KEYSTORE_PASSWORD"
+            echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS"
+            echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD"
+            echo "VERSION_CODE=${{ github.run_number }}"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Copy APK, verify signature and size
+        run: |
+          set -euo pipefail
+          SRC=android/app/build/outputs/apk/release/app-release.apk
+          OUT="DocSongNgu-b${{ github.run_number }}.apk"
+          cp "$SRC" "$OUT"
+          SIZE=$(stat -c%s "$OUT")
+          echo "APK size: $SIZE bytes"
+          if [ "$SIZE" -gt 31457280 ]; then
+            echo "::error::APK larger than 30 MB ($SIZE bytes)"
+            exit 1
+          fi
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "Using build-tools: $BT"
+          "$BT/apksigner" verify --print-certs "$OUT" | tee apksigner.txt
+          SHA=$(grep -i 'certificate SHA-256 digest' apksigner.txt | awk -F': ' '{print $2}' | tr -d ' ')
+          echo "Certificate SHA-256: $SHA"
+          echo "Certificate SHA-256: $SHA" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DocSongNgu-b${{ github.run_number }}
+          path: DocSongNgu-b${{ github.run_number }}.apk
+          if-no-files-found: error
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: b${{ github.run_number }}
+          name: b${{ github.run_number }}
+          files: DocSongNgu-b${{ github.run_number }}.apk

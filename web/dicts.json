@@ -1,0 +1,71 @@
+[
+  {
+    "lang": "zh",
+    "id": "cvdict",
+    "name": "CVDICT Trung–Việt",
+    "gloss_lang": "vi",
+    "license": "CC BY-SA 4.0",
+    "homepage": "https://github.com/ph0ngp/CVDICT",
+    "url": "https://raw.githubusercontent.com/ph0ngp/CVDICT/main/CVDICT.u8",
+    "url_resolver": null,
+    "format": "cedict",
+    "compressed": "none",
+    "zip_entry": null,
+    "columns": null,
+    "sep": null,
+    "sense_sep": null,
+    "skip_lines": 0,
+    "cors": true,
+    "size_mb": 10.3,
+    "entries": 122597
+  },
+  {
+    "lang": "ja",
+    "id": "jmdict_eng_common",
+    "name": "JMdict (EDRDG) từ thông dụng, tiếng Anh",
+    "gloss_lang": "en",
+    "license": "CC BY-SA 4.0",
+    "homepage": "https://github.com/scriptin/jmdict-simplified",
+    "url": "https://github.com/scriptin/jmdict-simplified/releases/download/3.6.2%2B20261123231529/jmdict-eng-common-3.6.2%2B20261123231529.json.zip",
+    "url_resolver": {
+      "github_latest": "scriptin/jmdict-simplified",
+      "asset_regex": "^jmdict-eng-common-.*\\.json\\.zip$"
+    },
+    "format": "jmdict_simplified",
+    "compressed": "zip",
+    "zip_entry": "jmdict-eng-common-3.6.2.json",
+    "columns": null,
+    "sep": null,
+    "sense_sep": null,
+    "skip_lines": 0,
+    "cors": false,
+    "size_mb": 1.38,
+    "entries": 22662
+  },
+  {
+    "lang": "ko",
+    "id": "kengdic",
+    "name": "Kengdic Hàn–Anh",
+    "gloss_lang": "en",
+    "license": "MPL 2.0 hoặc LGPL 2.0+ (chọn một)",
+    "homepage": "https://github.com/garfieldnate/kengdic",
+    "url": "https://raw.githubusercontent.com/garfieldnate/kengdic/master/kengdic.tsv",
+    "url_resolver": null,
+    "format": "tsv",
+    "compressed": "none",
+    "zip_entry": null,
+    "columns": {
+      "head": 1,
+      "alt": 2,
+      "reading": null,
+      "pos": null,
+      "senses": 3
+    },
+    "sep": "\t",
+    "sense_sep": ";",
+    "skip_lines": 1,
+    "cors": true,
+    "size_mb": 11.1,
+    "entries": 117509
+  }
+]

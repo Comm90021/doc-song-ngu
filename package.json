@@ -1,0 +1,32 @@
+{
+  "name": "doc-song-ngu",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Đọc song ngữ Trung · Nhật · Hàn · Anh — bản máy tính + app Android",
+  "type": "module",
+  "scripts": {
+    "vendor": "node tools/vendor.mjs",
+    "test": "node --test",
+    "smoke": "node tools/smoke.mjs",
+    "check-sources": "node tools/check_sources.mjs",
+    "cap:sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3",
+    "@mozilla/readability": "^0.6.0",
+    "fflate": "^0.8.3",
+    "jieba-wasm": "^2.4.0",
+    "kuromoji": "^0.1.2",
+    "opencc-js": "^1.4.2",
+    "pinyin-pro": "^3.29.5"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
+    "fake-indexeddb": "^6.2.8",
+    "jsdom": "^31.0.1"
+  }
+}

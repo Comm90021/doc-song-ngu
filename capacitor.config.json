@@ -1,0 +1,8 @@
+{
+  "appId": "app.docsongngu",
+  "appName": "Đọc Song Ngữ",
+  "webDir": "web",
+  "plugins": {
+    "CapacitorHttp": { "enabled": false }
+  }
+}

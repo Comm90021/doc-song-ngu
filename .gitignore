@@ -1,0 +1,8 @@
+node_modules/
+web/vendor/
+data/
+.secrets/
+dist/
+docs/codex_last.txt
+docs/shots/
+*.log

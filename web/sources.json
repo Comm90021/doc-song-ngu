@@ -1,0 +1,331 @@
+[
+  {
+    "id": "nhk-seiji",
+    "name": "NHK NEWS WEB – 政治",
+    "lang": "ja",
+    "kind": "rss",
+    "url": "https://news.web.nhk/n-data/conf/na/rss/cat4.xml",
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "nhk-kokusai",
+    "name": "NHK NEWS WEB – 国際",
+    "lang": "ja",
+    "kind": "rss",
+    "url": "https://news.web.nhk/n-data/conf/na/rss/cat6.xml",
+    "topics": [
+      "world"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "nippon-ja",
+    "name": "nippon.com – 日本語",
+    "lang": "ja",
+    "kind": "rss",
+    "url": "https://www.nippon.com/list/feed/rss_ja",
+    "topics": [
+      "society",
+      "culture"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-ja-lichsu",
+    "name": "Wikipedia 日本語 – Lịch sử",
+    "lang": "ja",
+    "kind": "wikipedia",
+    "wiki": "ja",
+    "query": "articletopic:history",
+    "per_refresh": 10,
+    "topics": [
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-ja-seiji",
+    "name": "Wikipedia 日本語 – Chính trị",
+    "lang": "ja",
+    "kind": "wikipedia",
+    "wiki": "ja",
+    "query": "articletopic:politics-and-government",
+    "per_refresh": 10,
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-ja-tfa",
+    "name": "Wikipedia 日本語 – Bài chọn lọc hôm nay",
+    "lang": "ja",
+    "kind": "wikipedia_featured",
+    "wiki": "ja",
+    "topics": [
+      "culture",
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "aozora",
+    "name": "Aozora Bunko",
+    "lang": "ja",
+    "kind": "aozora",
+    "ndc": [
+      "21",
+      "28",
+      "913",
+      "914"
+    ],
+    "max_chars": 30000,
+    "per_refresh": 10,
+    "topics": [
+      "literature",
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "bbc-zh",
+    "name": "BBC 中文",
+    "lang": "zh",
+    "kind": "rss",
+    "url": "https://feeds.bbci.co.uk/zhongwen/trad/rss.xml",
+    "topics": [
+      "world"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "dw-zh",
+    "name": "DW 中文",
+    "lang": "zh",
+    "kind": "rss",
+    "url": "https://rss.dw.com/xml/rss-chi-all",
+    "topics": [
+      "world"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "rfi-zh",
+    "name": "RFI 中文",
+    "lang": "zh",
+    "kind": "rss",
+    "url": "https://www.rfi.fr/cn/rss",
+    "topics": [
+      "world"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-zh-lishi",
+    "name": "Wikipedia 中文 – Lịch sử",
+    "lang": "zh",
+    "kind": "wikipedia",
+    "wiki": "zh",
+    "query": "articletopic:history",
+    "per_refresh": 10,
+    "topics": [
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-zh-zhengzhi",
+    "name": "Wikipedia 中文 – Chính trị",
+    "lang": "zh",
+    "kind": "wikipedia",
+    "wiki": "zh",
+    "query": "articletopic:politics-and-government",
+    "per_refresh": 10,
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "ws-zh-sanguo",
+    "name": "三國演義 – Wikisource",
+    "lang": "zh",
+    "kind": "wikisource_series",
+    "wiki": "zh",
+    "index": "三國演義",
+    "topics": [
+      "literature",
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "ws-zh-xiyou",
+    "name": "西遊記 – Wikisource",
+    "lang": "zh",
+    "kind": "wikisource_series",
+    "wiki": "zh",
+    "index": "西遊記",
+    "topics": [
+      "literature"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "ws-zh-shuihu",
+    "name": "水滸傳 (100回本) – Wikisource",
+    "lang": "zh",
+    "kind": "wikisource_series",
+    "wiki": "zh",
+    "index": "水滸傳 (100回本)",
+    "topics": [
+      "literature"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "yna-politics",
+    "name": "연합뉴스 – 정치",
+    "lang": "ko",
+    "kind": "rss",
+    "url": "https://www.yna.co.kr/rss/politics.xml",
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "khan-politics",
+    "name": "경향신문 – 정치",
+    "lang": "ko",
+    "kind": "rss",
+    "url": "https://www.khan.co.kr/rss/rssdata/politic_news.xml",
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "bbc-ko",
+    "name": "BBC 코리아",
+    "lang": "ko",
+    "kind": "rss",
+    "url": "https://feeds.bbci.co.uk/korean/rss.xml",
+    "topics": [
+      "world"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-ko-lichsu",
+    "name": "Wikipedia 한국어 – 역사",
+    "lang": "ko",
+    "kind": "wikipedia",
+    "wiki": "ko",
+    "query": "articletopic:history",
+    "per_refresh": 10,
+    "topics": [
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-ko-jeongchi",
+    "name": "Wikipedia 한국어 – 정치",
+    "lang": "ko",
+    "kind": "wikipedia",
+    "wiki": "ko",
+    "query": "articletopic:politics-and-government",
+    "per_refresh": 10,
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "npr-politics",
+    "name": "NPR – Politics",
+    "lang": "en",
+    "kind": "rss",
+    "url": "https://feeds.npr.org/1014/rss.xml",
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "pbs-politics",
+    "name": "PBS NewsHour – Politics",
+    "lang": "en",
+    "kind": "rss",
+    "url": "https://www.pbs.org/newshour/feeds/rss/politics",
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "conversation-us-politics",
+    "name": "The Conversation US – Politics",
+    "lang": "en",
+    "kind": "rss",
+    "url": "https://theconversation.com/us/politics/articles.atom",
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-en-history",
+    "name": "Wikipedia EN – History",
+    "lang": "en",
+    "kind": "wikipedia",
+    "wiki": "en",
+    "query": "articletopic:history",
+    "per_refresh": 10,
+    "topics": [
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-en-politics",
+    "name": "Wikipedia EN – Politics",
+    "lang": "en",
+    "kind": "wikipedia",
+    "wiki": "en",
+    "query": "articletopic:politics-and-government",
+    "per_refresh": 10,
+    "topics": [
+      "politics"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "wiki-en-tfa",
+    "name": "Wikipedia EN – Bài chọn lọc hôm nay",
+    "lang": "en",
+    "kind": "wikipedia_featured",
+    "wiki": "en",
+    "topics": [
+      "history"
+    ],
+    "enabled": true
+  },
+  {
+    "id": "ws-en-federalist",
+    "name": "The Federalist (Dawson) – Wikisource",
+    "lang": "en",
+    "kind": "wikisource_series",
+    "wiki": "en",
+    "index": "The Federalist (Dawson)",
+    "topics": [
+      "politics",
+      "history"
+    ],
+    "enabled": true
+  }
+]
