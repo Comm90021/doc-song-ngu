@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -29,12 +29,12 @@ jobs:
       - name: Sync Capacitor to Android
         run: npx cap sync android
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      # Android SDK đã có sẵn trên ubuntu-latest (ANDROID_HOME); setup-android@v3 lỗi vì gói 'tools' cũ đã bị gỡ.
 
       - name: Decode release keystore and export signing env
         env:
