@@ -1,6 +1,6 @@
 import {analyzeEn} from './en.js';
 import {analyzeKo} from './ko.js';
-import {emit} from '../core/bus.js';
+import {emit,toast} from '../core/bus.js';
 import * as db from '../core/db.js';
 const workers=new Map();let seq=0;
 export async function analyze(lang,sentences,opts={}){
@@ -18,5 +18,15 @@ export async function analyze(lang,sentences,opts={}){
     worker.onmessage=({data})=>{const pair=requests.get(data.id);requests.delete(data.id);if(pair)data.error?pair.reject(Error(data.error)):pair.resolve(data.result);};
     worker.onerror=e=>{for(const pair of requests.values())pair.reject(Error(e.message));worker.terminate();workers.delete(lang);};
   }
-  return new Promise((resolve,reject)=>{const id=++seq;entry.requests.set(id,{resolve,reject});entry.worker.postMessage({id,sentences});});
+  const work=new Promise((resolve,reject)=>{const id=++seq;entry.requests.set(id,{resolve,reject});entry.worker.postMessage({id,sentences});});
+  const timeout=new Promise((_,reject)=>setTimeout(()=>reject(Error('Hết thời gian chờ bộ tách từ')),120000));
+  try{return await Promise.race([work,timeout]);}
+  catch(e){return plain(lang,sentences,e);}
+}
+// Bộ tách từ lỗi (vd. không nạp được từ điển) → vẫn mở bài, chỉ không có phiên âm/tra từ; báo một lần.
+const warned=new Set();
+function plain(lang,sentences,error){
+  console.warn('Bộ tách từ lỗi:',lang,error);
+  if(!warned.has(lang)){warned.add(lang);toast((lang==='ja'?'Không nạp được bộ phiên âm tiếng Nhật':'Không nạp được bộ tách từ tiếng Trung')+' — bài vẫn mở nhưng không có phiên âm.');}
+  return sentences.map(s=>({tokens:[{s}],words:[]}));
 }
